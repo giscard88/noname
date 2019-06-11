@@ -45,13 +45,16 @@ class CogMem_numpy:
 
     def Test_batch(self,roV):
         size=roV.shape
+        flag_single=False
         if len(size)==1:
             norm=np.linalg.norm(roV)
-            roV=roV/(norm+np.finfo(float).eps)   
+            roV=roV/(norm+np.finfo(float).eps)
+            flag_single=True   
         else:
             norm=np.linalg.norm(roV, axis=1)
-            for xi, xin in enumerate(range(size[1])):
-                roV[xin,:]=roV[xin,:]/(norm[xi]+np.finfo(float).eps)
+            for xin in range(size[0]):
+
+                roV[xin,:]=roV[xin,:]/(norm[xin]+np.finfo(float).eps)
 
         if self.blank:
             if len(size)==1:
@@ -62,17 +65,44 @@ class CogMem_numpy:
                 self.wm.append(roV[0,:])
                 self.wm=np.array(self.wm)
                 self.blank=False
+                self.Mat_batch(roV[1:,:])
 
         else:
-            temp=np.matmul(self.wm,roV.T)
-            max_vec=np.amax(temp,axis=0)
-            idx=np.where(max_vec)[0]
-            sel_vecs=roV[idx,:]
-            self.wm=np.vstack((self.wm,sel_vecs))
-     
-            
-        
+            self.Mat_batch(roV,flag=flag_single )
 
+    def Mat_batch(self, roV, flag=False):            
+        temp=np.matmul(self.wm,roV.T)
+        if flag:
+            if np.amax(temp)<self.threshold:
+                self.wm=np.vstack((self.wm,roV))
+        else:    
+            print 'temp',temp
+            max_vec=np.amax(temp,axis=0)
+            print 'max_vec',max_vec
+            idx=np.where(max_vec<self.threshold)[0]
+            sel_vecs=roV[idx,:]
+            print idx
+            self.wm=np.vstack((self.wm,sel_vecs))
+
+
+'''
+mem=CogMem_numpy(5,0.8)
+a=np.random.rand(5,5)
+
+
+
+mem.Test_batch(a)
+print '1', mem.wm
+     
+mem.Test_batch(a[2,:])
+print '2',mem.wm
+
+mem.Test_batch(np.random.rand(5))
+print '3',mem.wm        
+
+'''
+
+# end of script
 
 
 
