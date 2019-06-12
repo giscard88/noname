@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import torch
 
 
 class CogMem_numpy:
@@ -84,11 +85,70 @@ class CogMem_numpy:
             print idx
             self.wm=np.vstack((self.wm,sel_vecs))
 
+class CogMem_torch:
+    def __init__(self,size, threshold):
+        self.inS=size
+        self.threshold=threshold
+        self.wm=[]
+        self.blank=True
 
-'''
-mem=CogMem_numpy(5,0.8)
+    def Test_batch(self,roV):
+        size=roV.size()
+        print size
+        flag_single=False
+        if len(size)==1:
+            norm=torch.norm(roV)
+            roV=roV/(norm+np.finfo(float).eps)
+            flag_single=True   
+        else:
+            norm=torch.norm(roV, dim=1)
+            for xin in range(size[0]):
+                roV[xin,:]=roV[xin,:]/(norm[xin]+np.finfo(float).eps)
+
+        if self.blank:
+            if len(size)==1:
+                self.wm=roV
+                self.blank=False
+            else:
+                
+                self.wm=roV[0,:]
+                self.blank=False
+                self.Mat_batch(roV[1:,:])
+
+        else:
+            self.Mat_batch(roV,flag=flag_single )
+
+    def Mat_batch(self, roV, flag=False):
+
+        if flag:
+            roV_T=torch.transpose(roV,-1,0)
+            #print roV            
+            temp=torch.matmul(self.wm,roV_T)
+            if torch.max(temp)[0]<self.threshold:
+                self.wm=torch.cat((self.wm,roV),dim=0)
+        else:
+
+            roV_T=torch.transpose(roV,0,1)
+          
+            temp=torch.matmul(self.wm,roV_T)    
+            if len(temp.size())==1:
+                max_vec=temp.numpy()
+            else:
+                max_vec=torch.max(temp,dim=0)[0].numpy()
+
+            idx=np.where(max_vec<self.threshold)[0]
+
+            idx=torch.from_numpy(idx)
+            sel_vecs=roV[idx,:]
+            self.wm=self.wm.view(-1,self.inS)
+
+            
+            self.wm=torch.cat((self.wm,sel_vecs),0)
+
+
+mem=CogMem_torch(5,0.9)
 a=np.random.rand(5,5)
-
+a=torch.from_numpy(a)
 
 
 mem.Test_batch(a)
@@ -97,10 +157,10 @@ print '1', mem.wm
 mem.Test_batch(a[2,:])
 print '2',mem.wm
 
-mem.Test_batch(np.random.rand(5))
+mem.Test_batch(torch.from_numpy(np.random.rand(5)))
 print '3',mem.wm        
 
-'''
+
 
 # end of script
 
