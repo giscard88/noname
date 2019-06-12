@@ -97,6 +97,7 @@ class CogMem_torch:
         print size
         flag_single=False
         if len(size)==1:
+            roV=roV.view(-1,self.inS)
             norm=torch.norm(roV)
             roV=roV/(norm+np.finfo(float).eps)
             flag_single=True   
@@ -124,7 +125,7 @@ class CogMem_torch:
             roV_T=torch.transpose(roV,-1,0)
             #print roV            
             temp=torch.matmul(self.wm,roV_T)
-            if torch.max(temp)[0]<self.threshold:
+            if torch.max(temp).item()<self.threshold:
                 self.wm=torch.cat((self.wm,roV),dim=0)
         else:
 
