@@ -18,6 +18,9 @@ class CogMem_numpy:
         else:
             return True
 
+    def Projection(self,roV):
+        self.image=np.matmul(self.wm,roV.T)
+
     def Test_i(self, roV):
         if self.blank:
             self.wm.append(roV)
@@ -146,7 +149,13 @@ class CogMem_torch:
             
             self.wm=torch.cat((self.wm,sel_vecs),0)
 
+    def Projection(self, roV): # roV is expected to be a matrix, not a single vector
 
+        roV_T=torch.transpose(roV,0,1)
+
+        self.image=torch.matmul(self.wm,roV_T)
+
+'''
 mem=CogMem_torch(5,0.9)
 a=np.random.rand(5,5)
 a=torch.from_numpy(a)
@@ -160,7 +169,7 @@ print '2',mem.wm
 
 mem.Test_batch(torch.from_numpy(np.random.rand(5)))
 print '3',mem.wm        
-
+'''
 
 
 # end of script
